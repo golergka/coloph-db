@@ -10,6 +10,7 @@ uv run python -m ruff check .
 uv run python -m ruff format --check .
 uv build
 uv run python scripts/smoke_wheel.py
+uv run python scripts/smoke_manifests.py
 ```
 
 The examples use public package imports.
@@ -17,6 +18,7 @@ Keep each example independent of any private checkout or service.
 Local unit tests require no database. PostgreSQL integration tests require an explicit `COLOPH_DB_TEST_DSN`.
 CI provides a disposable PostgreSQL service and runs those tests on each supported Python version.
 The artifact smoke installs the wheel outside the checkout and runs both example projects.
+The manifest smoke separately installs each example through its own metadata outside the checkout.
 
 ## Release
 

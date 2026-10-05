@@ -2,7 +2,7 @@
 name = "warehouse-example"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["coloph-db[binary]>=0.1.0,<0.2"]
+dependencies = ["coloph-db[binary] @ https://github.com/golergka/coloph-db/releases/download/v0.1.1/coloph_db-0.1.1-py3-none-any.whl"]
 
 [dependency-groups]
 dev = ["pytest>=8,<10"]

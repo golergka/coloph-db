@@ -34,3 +34,4 @@ jobs:
       - run: uv run python -m ruff format --check .
       - run: uv build
       - run: uv run python scripts/smoke_wheel.py
+      - run: uv run python scripts/smoke_manifests.py

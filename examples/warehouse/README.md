@@ -13,5 +13,13 @@ From the repository root:
 uv run pytest examples/warehouse
 ```
 
+Each example also installs and runs independently. From this directory:
+
+```sh
+uv sync
+uv run pytest
+```
+
+The manifest pins a published GitHub release wheel.
 The unit tests use a recording driver and require no database.
 CI also exercises read consistency and rollback against PostgreSQL through `tests/test_postgres.py`.

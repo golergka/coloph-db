@@ -1,5 +1,10 @@
 # Changes
 
+## 0.1.2
+
+- Use published GitHub wheels in documented installation and standalone example manifests.
+- Verify each example's dependency metadata in a separate environment outside the checkout.
+
 ## 0.1.1
 
 - Expose write routes and pending callback counts for application adapters.

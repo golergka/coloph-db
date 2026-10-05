@@ -14,8 +14,10 @@ Versions remain on `0.1.*` while the interface settles.
 ## Install
 
 ```sh
-uv add "coloph-db[binary]"
+uv add "coloph-db[binary] @ https://github.com/golergka/coloph-db/releases/download/v0.1.1/coloph_db-0.1.1-py3-none-any.whl"
 ```
+
+GitHub Releases is the initial distribution channel. The command pins an immutable published wheel.
 
 ## Use a connection
 
