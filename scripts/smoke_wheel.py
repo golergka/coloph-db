@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 
 
@@ -13,10 +14,10 @@ def main() -> None:
     parser.add_argument("--wheel", help="Built wheel path or published wheel URL")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    wheels = list((root / "dist").glob("coloph_db-*.whl"))
-    if args.wheel is None and len(wheels) != 1:
-        parser.error("Build one wheel or supply --wheel")
-    wheel = args.wheel or str(wheels[0])
+    built_wheel = root / "dist" / f"coloph_db-{version('coloph-db')}-py3-none-any.whl"
+    if args.wheel is None and not built_wheel.is_file():
+        parser.error("Build the current version or supply --wheel")
+    wheel = args.wheel or str(built_wheel)
     with tempfile.TemporaryDirectory(prefix="coloph-db-wheel-") as directory:
         temporary = Path(directory)
         environment = temporary / "environment"

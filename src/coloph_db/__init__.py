@@ -11,6 +11,7 @@ from .connection import (
     TrackingCursor,
     TransactionLifecycleError,
     UncommittedMutationCloseError,
+    run_on_commit_callbacks,
 )
 from .state import StateKey, TransactionState
 
@@ -27,4 +28,5 @@ __all__ = [
     "TransactionLifecycleError",
     "TransactionState",
     "UncommittedMutationCloseError",
+    "run_on_commit_callbacks",
 ]

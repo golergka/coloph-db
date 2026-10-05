@@ -1,5 +1,11 @@
 # Changes
 
+## 0.1.1
+
+- Expose write routes and pending callback counts for application adapters.
+- Share the callback queue runner through a public function with an explicit error reporter.
+- Preserve the primary application or commit error when context cleanup also fails.
+
 ## 0.1.0
 
 - Extract transaction lifecycle, execution hooks, tracked cursors, and close guards into a standalone psycopg package.

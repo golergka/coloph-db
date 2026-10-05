@@ -50,6 +50,9 @@ An implicit transaction containing only reads is rolled back before close.
 The guard uses PostgreSQL command tags. A successful batch without a tag and with affected rows counts as a mutation.
 The guard is conservative and does not parse arbitrary SQL.
 Raw driver operations bypass the guard.
+Applications can inspect `dirty_write`, `last_write_command`, `last_write_route`, and `write_routes` for diagnostics.
+`pending_callback_count` includes every callback waiting for the next transaction boundary.
+`run_on_commit_callbacks` runs a detached callback queue with an explicit error reporter.
 
 ## Explicit transaction context
 

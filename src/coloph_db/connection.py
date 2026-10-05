@@ -21,6 +21,17 @@ RawCursor = psycopg.Cursor[DictRow]
 OnCommitCallback = Callable[[], Awaitable[None]]
 
 
+async def run_on_commit_callbacks(
+    callbacks: Iterable[OnCommitCallback], *, report_error: Callable[[Exception], None]
+) -> None:
+    """Await callbacks in order and report each failure before continuing."""
+    for callback in callbacks:
+        try:
+            await callback()
+        except Exception as error:
+            report_error(error)
+
+
 @dataclass(frozen=True)
 class Execution:
     query: QueryNoTemplate
@@ -160,6 +171,14 @@ class ConnectionBase:
     @property
     def last_write_route(self) -> str | None:
         return self._dirty_write_route
+
+    @property
+    def write_routes(self) -> frozenset[str]:
+        return frozenset(self._dirty_write_kinds)
+
+    @property
+    def pending_callback_count(self) -> int:
+        return len(self._before_commit_callbacks) + len(self._after_commit_callbacks)
 
     def cancel(self) -> None:
         self.driver.cancel()
@@ -326,10 +345,12 @@ class ConnectionBase:
             ):
                 self.driver.rollback()
         finally:
-            self.driver.close()
-            self.state.clear()
-            self._before_commit_callbacks.clear()
-            self._after_commit_callbacks.clear()
+            try:
+                self.driver.close()
+            finally:
+                self.state.clear()
+                self._before_commit_callbacks.clear()
+                self._after_commit_callbacks.clear()
         if error is not None:
             raise error
 
@@ -342,21 +363,27 @@ class SyncConnection(ConnectionBase):
         return self
 
     def __exit__(self, kind: type[BaseException] | None, error: BaseException | None, tb: TracebackType | None) -> None:
-        if kind is not None:
+        if error is not None:
             try:
-                self.rollback()
-            finally:
-                self.close()
+                self._rollback_and_close()
+            except BaseException as cleanup_error:
+                raise error.with_traceback(tb) from cleanup_error
             return
         try:
             self.commit()
-        except BaseException:
+        except BaseException as commit_error:
             try:
-                self.rollback()
-            finally:
-                self.close()
+                self._rollback_and_close()
+            except BaseException as cleanup_error:
+                raise commit_error from cleanup_error
             raise
         else:
+            self.close()
+
+    def _rollback_and_close(self) -> None:
+        try:
+            self.rollback()
+        finally:
             self.close()
 
     @contextmanager
@@ -401,6 +428,10 @@ class CallbackConnection(ConnectionBase):
         self._on_commit_callbacks: list[OnCommitCallback] = []
         self._callbacks_running = False
 
+    @property
+    def pending_callback_count(self) -> int:
+        return super().pending_callback_count + len(self._on_commit_callbacks)
+
     def on_commit(self, callback: OnCommitCallback) -> None:
         if self._callbacks_running:
             raise TransactionLifecycleError("Cannot register callbacks while callbacks are running")
@@ -417,11 +448,7 @@ class CallbackConnection(ConnectionBase):
         callbacks, self._on_commit_callbacks = self._on_commit_callbacks, []
         self._callbacks_running = True
         try:
-            for callback in callbacks:
-                try:
-                    await callback()
-                except Exception as error:
-                    self._report_callback_error(error)
+            await run_on_commit_callbacks(callbacks, report_error=self._report_callback_error)
         finally:
             self._callbacks_running = False
 

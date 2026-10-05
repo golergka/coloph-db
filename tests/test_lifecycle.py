@@ -12,6 +12,7 @@ from coloph_db import (
     SyncConnection,
     TransactionLifecycleError,
     UncommittedMutationCloseError,
+    run_on_commit_callbacks,
 )
 
 
@@ -225,3 +226,40 @@ def test_driver_commit_failure_requires_rollback_before_retry():
     with pytest.raises(TransactionLifecycleError):
         conn.commit()
     raw.commit.assert_called_once()
+
+
+def test_public_diagnostics_cover_write_routes_and_pending_callbacks():
+    raw = raw_connection()
+    raw.execute.return_value.statusmessage = "UPDATE 1"
+    conn = SyncConnection(raw)
+    conn.execute("UPDATE things SET value = 1", route="application-global")
+    conn.before_commit(lambda: None)
+    conn.after_commit(lambda: None)
+    assert conn.write_routes == frozenset({"application-global"})
+    assert conn.pending_callback_count == 2
+    conn.rollback()
+    assert conn.write_routes == frozenset()
+    assert conn.pending_callback_count == 0
+
+
+async def test_detached_callback_queue_reports_failure_and_continues():
+    errors, order = [], []
+
+    async def fail():
+        raise ValueError("delivery")
+
+    async def succeed():
+        order.append(True)
+
+    await run_on_commit_callbacks([fail, succeed], report_error=errors.append)
+    assert len(errors) == 1
+    assert order == [True]
+
+
+def test_context_preserves_application_error_if_cleanup_also_fails():
+    raw = raw_connection()
+    raw.close.side_effect = psycopg.OperationalError("close failed")
+    with pytest.raises(ValueError, match="body failed") as raised:
+        with SyncConnection(raw):
+            raise ValueError("body failed")
+    assert isinstance(raised.value.__cause__, psycopg.OperationalError)
