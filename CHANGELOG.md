@@ -4,6 +4,7 @@
 
 - Use published GitHub wheels in documented installation and standalone example manifests.
 - Verify each example's dependency metadata in a separate environment outside the checkout.
+- Document explicitly requested local-only release validation.
 
 ## 0.1.1
 

@@ -28,7 +28,7 @@ Keep versions on `0.1.*` until the user changes this constraint.
 2. Run all local checks and the installed-wheel smoke.
 3. Review and commit the changes.
 4. Push the tested commit to the public default branch.
-5. Wait for CI on that exact commit.
+5. Record validation on that exact commit. Use CI for the full PostgreSQL and Python-version matrix. When the user explicitly requests local-only validation, use the local unit, type, lint, build, and offline artifact checks and record that narrower scope.
 6. Create an immutable matching `v0.1.*` tag.
 7. Build distributions from that tag and publish a GitHub release with those files.
 8. Install the published artifact in a clean environment and run the smoke procedure.
