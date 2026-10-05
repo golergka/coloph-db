@@ -1,0 +1,8 @@
+[project]
+name = "expense-service-example"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["coloph-db[binary]>=0.1.0,<0.2"]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2"]
